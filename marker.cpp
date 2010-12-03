@@ -54,7 +54,7 @@ void detectEdgelsVertical(Mat &img, int r, int c, int R, int C, vector<Edgel> &e
   for(int i = r; i < R - 5; ++i) {
    double v = 0;
    for(int k = 0; k < 5; ++k)
-    v += img.at<uchar>(i + k, j) * _der_gaussian[k];
+    v += img.at<Vec3b>(i + k, j)[0] * _der_gaussian[k];
    v = abs(v);
    if(v > _threshold)
     edgels.push_back(getEdgel(img, i + 2, j));
@@ -67,7 +67,7 @@ void detectEdgelsHorizontal(Mat &img, int r, int c, int R, int C, vector<Edgel> 
   for(int j = c; j < C - 5; ++j) {
    double v = 0;
    for(int k = 0; k < 5; ++k)
-    v += img.at<uchar>(i, j + k) * _der_gaussian[k];
+    v += img.at<Vec3b>(i, j + k)[0] * _der_gaussian[k];
    v = abs(v);
    if(v > _threshold)
     edgels.push_back(getEdgel(img, i, j + 2));
@@ -111,7 +111,7 @@ void detectAndDraw( Mat& img,
 
  
  double t = (double)cvGetTickCount();
- detectEdgels(smallImg, edgels);
+ detectEdgels(img, edgels);
  t = (double)cvGetTickCount() - t;
  printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
 
