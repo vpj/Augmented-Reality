@@ -1,3 +1,5 @@
+#ifndef GEOM_H
+#define GEOM_H
 #include <iostream>
 #include <vector>
 #include <set>
@@ -5,7 +7,7 @@
 
 using namespace std;
 
-namespace vpj {
+namespace geom {
  template<class T>
  class Point {
   public:
@@ -134,4 +136,5 @@ namespace vpj {
   }
  };
 }
+#endif
 
