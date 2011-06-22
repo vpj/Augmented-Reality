@@ -2,6 +2,7 @@
 
 #include "cv.h"
 #include "highgui.h"
+#include "geom.h"
 
 #include <iostream>
 #include <cstdio>
@@ -22,136 +23,6 @@ const double SEGMENT_MERGE_LENGTH_SQ_THRESHOLD = 10000;
 const double SEGMENT_LENGTH_SQ_THRESHOLD = 10000;
 const double CORNER_ANGLE_THRESHOLD = PI / 100;
 const double CORNER_SEGMENT_DISTANCE_THRESHOLD = 100;
-
-namespace vpj {
- template<class T>
- class Point {
-  public:
-   T x, y;
-
-   Point(const Point &p) { x = p.x, y = p.y; }
-
-   Point(T x, T y) { Point::x = x; Point::y = y; }
-
-   Point() { x = y = 0; }
-
-   /* You'll have to calculate atan2 with respect to a midpoint */
-   double atan2() const { return std::atan2((double)y, (double)x); }
-
-   Point<T> operator + (const Point<T> &p) const { return Point<T>(x + p.x, y + p.y); }
-   void operator += (const Point<T> &p) { x += p.x, y += p.y; }
-
-   Point<T> operator - (const Point<T> &p) const { return Point<T>(x - p.x, y - p.y); }
-   void operator -= (const Point<T> &p) { x -= p.x, y -= p.y; }
-
-   T operator ^ (const Point<T> &p) const { return x * p.x + y * p.y; } // dot product
-
-   T operator * (const Point<T> &p) const { return x * p.y - y * p.x; } // cross product
-
-   /* You'll have to calculate atan2 with respect to a midpoint */
-//   bool operator < (const Point<T> &p)  const { return (Point::atan2() < p.atan2()); }
-
-   bool operator < (const Point<T> &p)  const { return (y < p.y ? true : ((y == p.y && x < p.x) ? true : false)); }
-   bool operator > (const Point<T> &p)  const { return (y > p.y ? true : ((y == p.y && x > p.x) ? true : false)); }
-   bool operator == (const Point<T> &p)  const { return (y == p.y && x == p.x); }
-   bool operator <= (const Point<T> &p)  const { return (y < p.y ? true : ((y == p.y && x <= p.x) ? true : false)); }
-   bool operator >= (const Point<T> &p)  const { return (y > p.y ? true : ((y == p.y && x >= p.x) ? true : false)); }
-
-   operator Point<double>() { return Point<double>(x, y); };
-
-   Point<double> operator / (const double s) const { return Point<double>(x / s, y / s); }
-
-   double mag() const { return sqrt((double)x * x + (double)y * y); }
-   double dis(const Point<T> &p) const {return (Point<T>(x - p.x, y - p.y)).mag();}
-
-   T mag2() const { return x * x + y * y; }
-   T dis2(const Point<T> &p) const {return (Point<T>(x - p.x, y - p.y)).mag2();}
-
-   // Rotate by ang (in radians) anti-clockwise
-   Point<double> rotate(double ang) const {
-    return Point<double>(x * cos(ang) - y * sin(ang), x * sin(ang) + y * cos(ang));
-   }
- };
-
-
- template<class T>
- class Line { //ax + by = c
-  public:
-   T a, b, c;
-
-   Line(const Line &l) { a = l.a, b = l.b, c = l.c; }
-
-   Line(T a, T b, T c) { Line::a = a, Line::b = b, Line::c = c; }
-
-   Line() { a = b = c = 0; }
-
-   Line(const Point<T> &p1, const Point<T> &p2) {
-    a = p2.y - p1.y;
-    b = p1.x - p2.x;
-    c = a * p1.x + b * p1.y;
-   }
-
-   Line(const Point<T> &p) {
-    a = p.y;
-    b = -p.x;
-    c = 0;
-   }
-
-   bool operator == (const Line<T> &l) const { return (a * l.c == l.a * c && b * l.c == l.b * c); }
-
-   bool onLine(const Point<T> &p) const { return (a * p.x + b * p.y == c); }
-
-   /* Give the parallel line going through Point p */
-   Line<T> para(const Point<T> &p) const {return Line<T>(a, b, a * p.x + b * p.y); }
-
-   /* Give the perpendicular line going through Point p */
-   Line<T> perp(const Point<T> &p) const { return Line<T>(-b, a, -b * p.x + a * p.y); }
-
-   bool isParallel(const Line<T> &l) const { return (a * l.b == l.a * b); }
-
-   Point<double> intersection(const Line<T> &l) const {
-    return Point<double>(((double)l.b * c - b * l.c), ((double)a * l.c - l.a * c)) / ((double)a * l.b - l.a * b);
-   }
- };
-
- template<class T>
- class Matrix
- {
- private:
-  vector< vector<T> > a;
-
- public:
-  int R, C;
-
-  Matrix(const Matrix<T> &m)
-  {
-   R = m.R, C = m.C;
-
-   a = vector< vector<T> >(R, vector<T>(C, 0));
-
-   for(int r = 0; r < R; r++)
-    for(int c = 0; c < C; c++)
-     a[r][c] = m[r][c];
-  }
-
-  Matrix(int _R, int _C)
-  {
-   R = _R, C = _C;
-
-   a = vector< vector<T> >(R, vector<T>(C, 0));
-  }
-
-  vector<T>& operator [](int r)
-  {
-   return a[r];
-  }
-
-  const vector<T>& operator [](int r) const
-  {
-   return a[r];
-  }
- };
-}
 
 struct Edgel {
  int x, y;
@@ -176,8 +47,8 @@ struct Edgel {
  }
 };
 
-vpj::Matrix<double> LX(3, 3);
-vpj::Matrix<double> LY(3, 3);
+geom::Matrix<double> LX(3, 3);
+geom::Matrix<double> LY(3, 3);
 
 struct Segment {
  int x1, y1, x2, y2;
@@ -189,7 +60,7 @@ struct Segment {
   this->y2 = y2;
  }
 
- Segment(vpj::Point<int> a, vpj::Point<int> b) {
+ Segment(geom::Point<int> a, geom::Point<int> b) {
   this->x1 = a.x;
   this->y1 = a.y;
   this->x2 = b.x;
@@ -213,19 +84,19 @@ struct Segment {
 };
 
 struct Corner {
- vpj::Point<double> corner;
- vpj::Point<double> a, b;
- vpj::Point<double> _a, _b;
+ geom::Point<double> corner;
+ geom::Point<double> a, b;
+ geom::Point<double> _a, _b;
 
  Corner (Segment i, Segment j) {
-  vpj::Point<double> a(i.x1, i.y1), b(i.x2, i.y2);
-  vpj::Point<double> c(j.x1, j.y1), d(j.x2, j.y2);
+  geom::Point<double> a(i.x1, i.y1), b(i.x2, i.y2);
+  geom::Point<double> c(j.x1, j.y1), d(j.x2, j.y2);
 
-  vpj::Line<double> l1(a, b);
-  vpj::Line<double> l2(c, d);
+  geom::Line<double> l1(a, b);
+  geom::Line<double> l2(c, d);
 
   corner = l1.intersection(l2);
-  vpj::Point<double> a1 = a - corner,
+  geom::Point<double> a1 = a - corner,
    b1 = b - corner,
    c1 = c - corner,
    d1 = d - corner;
@@ -283,9 +154,9 @@ double diff_angle(double a1, double a2) {
 }
 
 double line_point_distance(Edgel &ea, Edgel &eb, Edgel &ep) {
- vpj::Point<double> a(ea.x, ea.y);
- vpj::Point<double> b(eb.x, eb.y);
- vpj::Point<double> p(ep.x, ep.y);
+ geom::Point<double> a(ea.x, ea.y);
+ geom::Point<double> b(eb.x, eb.y);
+ geom::Point<double> p(ep.x, ep.y);
 
  return abs(((p - a) * (b - a)) / (b - a).mag());
 }
@@ -384,7 +255,7 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
  }
 }
 
-double filter(Mat &img, int r, int c, vpj::Matrix<double> &m) {
+double filter(Mat &img, int r, int c, geom::Matrix<double> &m) {
  double v = 0;
 
  for(int i = r - m.R / 2; i <= r + m.R / 2; ++i) {
@@ -447,12 +318,12 @@ void detectEdgels(Mat &img, vector<Edgel> &edgels, vector<Segment> &segments)
 }
 
 pair<Segment, Segment> join_segments(Segment &a, Segment &b) {
- vpj::Point<int> ap[2];
- ap[0] = vpj::Point<int>(a.x1, a.y1);
- ap[1] = vpj::Point<int>(a.x2, a.y2);
- vpj::Point<int> bp[2];
- bp[0] = vpj::Point<int>(b.x1, b.y1);
- bp[1] = vpj::Point<int>(b.x2, b.y2);
+ geom::Point<int> ap[2];
+ ap[0] = geom::Point<int>(a.x1, a.y1);
+ ap[1] = geom::Point<int>(a.x2, a.y2);
+ geom::Point<int> bp[2];
+ bp[0] = geom::Point<int>(b.x1, b.y1);
+ bp[1] = geom::Point<int>(b.x2, b.y2);
 
  if(ap[0] > ap[1]) swap(ap[0], ap[1]);
  if(bp[0] > bp[1]) swap(bp[0], bp[1]);
@@ -464,11 +335,11 @@ pair<Segment, Segment> join_segments(Segment &a, Segment &b) {
 }
 
 Segment merge_segments(Segment &a, Segment &b) {
- vpj::Point<int> p[4];
- p[0] = vpj::Point<int>(a.x1, a.y1);
- p[1] = vpj::Point<int>(a.x2, a.y2);
- p[2] = vpj::Point<int>(b.x1, b.y1);
- p[3] = vpj::Point<int>(b.x2, b.y2);
+ geom::Point<int> p[4];
+ p[0] = geom::Point<int>(a.x1, a.y1);
+ p[1] = geom::Point<int>(a.x2, a.y2);
+ p[2] = geom::Point<int>(b.x1, b.y1);
+ p[3] = geom::Point<int>(b.x2, b.y2);
 
  sort(p, p + 4);
 
@@ -567,14 +438,14 @@ vector<Corner> find_corners(Mat &img, vector<Segment> &s) {
     continue;
 
    Corner c(s[i], s[j]);
-   vpj::Point<double> v1 = c._a - c.corner, v2 = c._b - c.corner;
+   geom::Point<double> v1 = c._a - c.corner, v2 = c._b - c.corner;
    if(v1.mag() + v2.mag() > 200) // CORNER_SEGMENT_DISTANCE_THRESHOLD)
     continue;
-   vpj::Point<double> v = (v1 + v2);
+   geom::Point<double> v = (v1 + v2);
    double mag = v.mag() / 2;
    v.x /= mag;
    v.y /= mag;
-   vpj::Point<double> p = c.corner + v;
+   geom::Point<double> p = c.corner + v;
    int g = 0;
 
    for(int k = 0; k < 3; ++k) {
