@@ -132,7 +132,7 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
   }
 
   if(mx_votes >= VOTES_THRESHOLD) {
-   cout << mx_votes << endl;
+//   cout << mx_votes << endl;
    vector<int> votes = get_votes(edgels, mx_m, mx_n);
 
    /* Find the the endpoints of the segment */
@@ -362,29 +362,32 @@ vector<Corner> find_corners(Mat &img, vector<Segment> &s) {
    if(v1.mag() + v2.mag() > CORNER_SEGMENT_DISTANCE_THRESHOLD)
     continue;
 
+ //TODO: Detect color inside the corner
+   double g = 0;
+
+   v1 = c.a - c.corner, v2 = c.b - c.corner;
+   v1 = v1 / (v1.mag() / 2);
+   v2 = v2 / (v2.mag() / 2);
+
+   geom::Point<double> t1 = v1;
+   for(int i = 0; i < 5; ++i) {
+    geom::Point<double> t2 = v2;
+    for(int j = 0; j < 5; ++j) {
+     geom::Point<double> p = c.corner + t1 + t2;
+     g += img.at<uchar>(p.y, p.x);
+     t2 += v2;
+    }
+    t1 += v1;
+   }
+
+   g /= 25;
+
+   if(g > 80)
+    continue;
+
    r.push_back(c);
 
    break;
-
-   geom::Point<double> v = (v1 + v2);
-   double mag = v.mag() / 2;
-
-   if(mag < CORNER_MAGNITUDE_THRESHOLD)
-    continue;
-
-   v.x /= mag;
-   v.y /= mag;
-   geom::Point<double> p = c.corner + v;
-   int g = 0;
-
-   for(int k = 0; k < 3; ++k) {
-    g += img.at<uchar>(p.y, p.x);
-   }
-   g /= 3;
-
-   if(g < 80)
-    continue;
-
   }
  }
 

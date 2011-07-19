@@ -3,7 +3,7 @@ const double PI = 3.14159265358979323846;
 const double GAUSSIAN_DERIVATIVE[5] = {-3 * .0625, -5 * .0625, 0, 5 * .0625, 3 * .0625};
 
 const double SCALE_SQRT = 2.0;
-const double SCALE = 2.0;
+const double SCALE = 1.0;
 
 const double LINE_DISTANCE_THRESHOLD = 4 / SCALE;
 const double ANGLE_THRESHOLD = PI / 20;

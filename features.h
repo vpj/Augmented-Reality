@@ -59,7 +59,7 @@ struct Segment {
 struct Corner {
  geom::Point<double> corner;
  geom::Point<double> a, b;
- geom::Point<double> _a, _b;
+ geom::Point<double> _a, _b; // Closer to the corner
 
  Corner (Segment i, Segment j) {
   geom::Point<double> a(i.x1, i.y1), b(i.x2, i.y2);
