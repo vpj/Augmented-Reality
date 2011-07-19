@@ -84,5 +84,40 @@ struct Corner {
   else
    this->b = d, this->_b = c;
  }
+
+ double angle(int n) {
+  double d;
+  if(n == 0)
+   d = atan2(this->a.y - this->corner.y,  this->a.x - this->corner.x);
+  else
+   d = atan2(this->b.y - this->corner.y,  this->b.x - this->corner.x);
+  if(d < 0) d += PI;
+  return d;
+ }
+
+ double length(int n) {
+  if(n == 0)
+   return (this->a - this->corner).mag();
+  else
+   return (this->b - this->corner).mag();
+ }
+
+ geom::Point<double> end(int n) {
+  if(n == 0)
+   return this->a;
+  else
+   return this->b;
+ }
+};
+
+struct Box {
+ vector<Corner> corners;
+
+ Box() {
+ }
+
+ void add_corner(Corner c) {
+  this->corners.push_back(c);
+ }
 };
 

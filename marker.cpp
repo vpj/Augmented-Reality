@@ -394,6 +394,65 @@ vector<Corner> find_corners(Mat &img, vector<Segment> &s) {
  return r;
 }
 
+vector<Box> merge_corners(Mat &img, vector<Corner> &c) {
+ int N = c.size();
+
+ vector<int> parents(N);
+ for(int i = 0; i < N; ++i) parents[i] = i;
+
+ for(int i = 0; i < N; ++i) {
+  for(int j = 0; j < N; ++j) if(i != j) {
+   bool found = false;
+   for(int k = 0; k < 2 && !found; ++k)
+    for(int l = 0; l < 2 && !found; ++l) {
+     double ang = (c[i].corner - c[j].corner).atan2();
+     double dis = (c[i].corner - c[j].corner).mag();
+
+     if(diff_angle(c[i].angle(k), c[j].angle(l)) < CORNER_MERGE_ANGLE_THRESHOLD &&
+        diff_angle(c[i].angle(k), ang) < CORNER_MERGE_ANGLE_THRESHOLD &&
+        diff_angle(c[j].angle(l), ang) < CORNER_MERGE_ANGLE_THRESHOLD) {
+
+      double dist = dis - (c[i].length(k) + c[j].length(l));
+      if(dist < CORNER_MERGE_DISTANCE_THRESHOLD &&
+         dis > (c[i].end(k) - c[j].corner).mag() &&
+         dis > (c[j].end(l) - c[i].corner).mag()) {
+       int n = i, m = j;
+       while(parents[n] != n) n = parents[n];
+       while(parents[m] != m) m = parents[m];
+
+       int r = parents.size();
+       parents.push_back(r);
+       parents[n] = r;
+       parents[m] = r;
+       found = true;
+      }
+     }
+    }
+  }
+ }
+
+ map<int, int> boxes;
+
+ for(int i = 0; i < N; ++i) {
+  int n = i;
+  while(parents[n] != n) n = parents[n];
+  parents[i] = n;
+  if(!boxes.count(n)) {
+   int r = boxes.size();
+   boxes[n] = r;
+  }
+ }
+ vector<Box> res(boxes.size());
+
+ for(int i = 0; i < N; ++i) {
+  int n = boxes[parents[i]];
+
+  res[n].add_corner(c[i]);
+ }
+
+ return res;
+}
+
 void detectAndDraw(Mat& img)
 {
  vector<Edgel> edgels;
@@ -428,6 +487,7 @@ void detectAndDraw(Mat& img)
  tsegments = remove_small_segments(tsegments);
 
  vector<Corner> corners = find_corners(smallImg, tsegments);
+ vector<Box> boxes = merge_corners(smallImg, corners);
 
  for(vector<Segment>::const_iterator r = tsegments.begin(); r != tsegments.end(); r++)
  {
@@ -456,6 +516,20 @@ void detectAndDraw(Mat& img)
      line( img, a, c, color, 2);
      line( img, c, b, color, 2);
  }
+
+ for(vector<Box>::const_iterator r = boxes.begin(); r != boxes.end(); r++)
+ {
+     if(r->corners.size() < 2) continue;
+
+     Scalar color = CV_RGB(rand() % 256, rand() % 256, rand() % 256);
+     for(vector<Corner>::const_iterator s = r->corners.begin(); s != r->corners.end(); s++) {
+      Point center;
+      center.x = cvRound(s->corner.x*SCALE);
+      center.y = cvRound(s->corner.y*SCALE);
+      circle( img, center, 5, color, 3);
+     }
+ }
+
 
  cout << "Segments: " << tsegments.size() << endl;
 
