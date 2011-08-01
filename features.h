@@ -1,3 +1,6 @@
+#ifndef FEATURES_H
+#define FEATURES_H
+
 #include "geom.h"
 
 struct Edgel {
@@ -120,4 +123,4 @@ struct Box {
   this->corners.push_back(c);
  }
 };
-
+#endif

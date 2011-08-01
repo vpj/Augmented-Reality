@@ -1,3 +1,6 @@
+#ifndef CONSTS_H
+#define CONSTS_H
+
 const double PI = 3.14159265358979323846;
 
 const double GAUSSIAN_DERIVATIVE[5] = {-3 * .0625, -5 * .0625, 0, 5 * .0625, 3 * .0625};
@@ -21,3 +24,4 @@ const double CORNER_MAGNITUDE_THRESHOLD = 1e-9;
 
 const double CORNER_MERGE_ANGLE_THRESHOLD = PI / 50;
 const double CORNER_MERGE_DISTANCE_THRESHOLD = 50 / SCALE;
+#endif

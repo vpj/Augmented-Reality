@@ -1,5 +1,7 @@
 #define CV_NO_BACKWARD_COMPATIBILITY
 
+#include "edgels.h"
+#include "debug.h"
 #include "cv.h"
 #include "highgui.h"
 #include "geom.h"
@@ -14,8 +16,6 @@
 using namespace std;
 using namespace cv;
 
-geom::Matrix<double> LX(3, 3);
-geom::Matrix<double> LY(3, 3);
 
 /* difference between two angles */
 double diff_angle(double a1, double a2) {
@@ -36,16 +36,7 @@ double line_point_distance(Edgel &ea, Edgel &eb, Edgel &ep) {
 }
 
 void init() {
- /* Gradient Matrices */
- LX[0][0] = LX[2][0] = -1;
- LX[0][2] = LX[2][2] = 1;
- LX[1][0] = -2;
- LX[1][2] = 2;
-
- LY[0][0] = LY[0][2] = -1;
- LY[2][0] = LY[2][2] = 1;
- LY[0][1] = -2;
- LY[2][1] = 2;
+ init_gradient_matrices();
 }
 
 void detectAndDraw(Mat& img);
@@ -167,69 +158,6 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
    break;
   }
  }
-}
-
-/* Apply filter at a specific location */
-double filter(Mat &img, int r, int c, geom::Matrix<double> &m) {
- double v = 0;
-
- for(int i = r - m.R / 2; i <= r + m.R / 2; ++i) {
-  for(int j = c - m.C / 2; j <= c + m.C / 2; ++j) {
-   if(i < 0 || j < 0 || i >= img.rows || j >= img.cols)
-    continue;
-   v += img.at<uchar>(i, j) * m[i - (r - m.R / 2)][j - (c - m.C / 2)];
-  }
- }
-
- return v;
-}
-
-Edgel getEdgel(Mat &img, int r, int c) {
- double gx = filter(img, r, c, LX);
- double gy = filter(img, r, c, LY);
- return Edgel(r, c, gy, gx);
-}
-
-void detectEdgelsVertical(Mat &img, int r, int c, int R, int C, vector<Edgel> &edgels) {
- for(int j = c; j < C; j += 5) {
-  for(int i = r; i < R - 5; ++i) {
-   double v = 0;
-   for(int k = 0; k < 5; ++k)
-    v += img.at<uchar>(i + k, j) * GAUSSIAN_DERIVATIVE[k];
-   v = abs(v);
-   if(v > EDGE_THRESHOLD)
-    edgels.push_back(getEdgel(img, i + 2, j));
-  }
- }
-}
-
-void detectEdgelsHorizontal(Mat &img, int r, int c, int R, int C, vector<Edgel> &edgels) {
- for(int i = r; i < R; i += 5) {
-  for(int j = c; j < C - 5; ++j) {
-   double v = 0;
-   for(int k = 0; k < 5; ++k)
-    v += img.at<uchar>(i, j + k) * GAUSSIAN_DERIVATIVE[k];
-   v = abs(v);
-   if(v > EDGE_THRESHOLD)
-    edgels.push_back(getEdgel(img, i, j + 2));
-  }
- }
-}
-
-void detectEdgelsLocal(Mat &img, int r, int c, int R, int C, vector<Edgel> &edgels) {
- detectEdgelsHorizontal(img, r, c, R, C, edgels);
- detectEdgelsVertical(img, r, c, R, C, edgels);
-}
-
-void detectEdgels(Mat &img, vector<Edgel> &edgels, vector<Segment> &segments)
-{
- for(int i = 0; i < img.rows; i += 40)
-  for(int j = 0; j < img.cols; j += 40) {
-   vector<Edgel> v;
-   detectEdgelsLocal(img, i, j, min(i + 40, img.rows), min(j + 40, img.cols), v);
-   edgels.insert(edgels.end(), v.begin(), v.end());
-   Ransac(v, segments);
-  }
 }
 
 /* Join segments a and b
@@ -468,17 +396,8 @@ void detectAndDraw(Mat& img)
  detectEdgels(smallImg, edgels, segments);
  t = (double)cvGetTickCount() - t;
  printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
- for(vector<Segment>::const_iterator r = segments.begin(); r != segments.end(); r++)
- {
-     Point a;
-     Point b;
-     a.x = r->x1 * SCALE;
-     a.y = r->y1 * SCALE;
-     b.x = r->x2 * SCALE;
-     b.y = r->y2 * SCALE;
-     Scalar color = CV_RGB(100, 150, 255);
-//     line( img, a, b, color, 2);
- }
+
+ //drawSegments(segments, img, CV_RGB(100, 150, 255));
 
  cout << segments.size() << " ==> ";
  vector<Segment> tsegments = merge_segments(segments);
@@ -489,58 +408,13 @@ void detectAndDraw(Mat& img)
  vector<Corner> corners = find_corners(smallImg, tsegments);
  vector<Box> boxes = merge_corners(smallImg, corners);
 
- for(vector<Segment>::const_iterator r = tsegments.begin(); r != tsegments.end(); r++)
- {
-     Point a;
-     Point b;
-     a.x = r->x1 * SCALE;
-     a.y = r->y1 * SCALE;
-     b.x = r->x2 * SCALE;
-     b.y = r->y2 * SCALE;
-     Scalar color = CV_RGB(255, 100, 100);
-     line( img, a, b, color, 2);
- }
-
- for(vector<Corner>::const_iterator r = corners.begin(); r != corners.end(); r++)
- {
-     Point a;
-     Point b;
-     Point c;
-     a.x = r->a.x * SCALE;
-     a.y = r->a.y * SCALE;
-     b.x = r->b.x * SCALE;
-     b.y = r->b.y * SCALE;
-     c.x = r->corner.x * SCALE;
-     c.y = r->corner.y * SCALE;
-     Scalar color = CV_RGB(100, 255, 100);
-     line( img, a, c, color, 2);
-     line( img, c, b, color, 2);
- }
-
- for(vector<Box>::const_iterator r = boxes.begin(); r != boxes.end(); r++)
- {
-     if(r->corners.size() < 2) continue;
-
-     Scalar color = CV_RGB(rand() % 256, rand() % 256, rand() % 256);
-     for(vector<Corner>::const_iterator s = r->corners.begin(); s != r->corners.end(); s++) {
-      Point center;
-      center.x = cvRound(s->corner.x*SCALE);
-      center.y = cvRound(s->corner.y*SCALE);
-      circle( img, center, 5, color, 3);
-     }
- }
-
+ //drawSegments(tsegments, img, CV_RGB(255, 100, 100));
+ drawCorners(corners, img, CV_RGB(255, 0, 0));
+ //drawBoxes(boxes, img);
 
  cout << "Segments: " << tsegments.size() << endl;
 
+// drawEdgels(edgels, img, CV_RGB(100, 255, 100));
 
- for(vector<Edgel>::const_iterator r = edgels.begin(); r != edgels.end(); r++)
- {
-     Point center;
-     Scalar color = CV_RGB(100, 255, 100);
-     center.x = cvRound(r->x*SCALE);
-     center.y = cvRound(r->y*SCALE);
-//     circle( img, center, 1, color, 1);
- }
  cv::imshow( "result", img );
 }
