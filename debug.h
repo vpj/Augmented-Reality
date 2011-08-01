@@ -1,25 +1,40 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+void drawGrid(Mat &img, Scalar color) {
+ double Y = img.rows, X = img.cols;
+
+ for(int i = 0; i < img.rows; i += 40 * SCALE) {
+  Point a, b;
+  a.x = 0, b.x = X;
+  a.y = b.y = i;
+  line(img, a, b, color, 1);
+ }
+
+ for(int i = 0; i < img.cols; i += 40 * SCALE) {
+  Point a, b;
+  a.y = 0, b.y = Y;
+  a.x = b.x = i;
+  line(img, a, b, color, 1);
+ }
+}
+
 void drawSegments(vector<Segment> &s, Mat &img, Scalar color) {
  for(vector<Segment>::const_iterator r = s.begin(); r != s.end(); r++)
  {
-     Point a;
-     Point b;
+     Point a, b;
      a.x = r->x1 * SCALE;
      a.y = r->y1 * SCALE;
      b.x = r->x2 * SCALE;
      b.y = r->y2 * SCALE;
-     line( img, a, b, color, 2);
+     line( img, a, b, color, 1);
  }
 }
 
 void drawCorners(vector<Corner> &c, Mat &img, Scalar color) {
  for(vector<Corner>::const_iterator r = c.begin(); r != c.end(); r++)
  {
-     Point a;
-     Point b;
-     Point c;
+     Point a, b, c;
      a.x = r->a.x * SCALE;
      a.y = r->a.y * SCALE;
      b.x = r->b.x * SCALE;
@@ -34,10 +49,20 @@ void drawCorners(vector<Corner> &c, Mat &img, Scalar color) {
 void drawEdgels(vector<Edgel> &e, Mat &img, Scalar color) {
  for(vector<Edgel>::const_iterator r = e.begin(); r != e.end(); r++)
  {
-     Point center;
-     center.x = cvRound(r->x*SCALE);
-     center.y = cvRound(r->y*SCALE);
-     circle( img, center, 1, color, 1);
+     Point a, b;
+     double x = r->gx;
+     double y = r->gy;
+     double l = sqrt(x * x + y * y);
+     x /= 50 * SCALE, y /= 50 * SCALE;
+//     double t = x;
+//     x = -y;
+//     y = t;
+
+     a.x = r->x*SCALE;
+     a.y = r->y*SCALE;
+     b.x = (r->x + x) * SCALE;
+     b.y = (r->y + y) * SCALE;
+     line( img, a, b, color, 1);
  }
 }
 

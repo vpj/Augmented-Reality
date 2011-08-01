@@ -6,7 +6,7 @@
 #include "geom.h"
 #include "consts.h"
 #include "features.h"
-#include "edgels.h"
+#include "ransac.h"
 
 using namespace std;
 using namespace cv;
@@ -14,7 +14,6 @@ using namespace cv;
 geom::Matrix<double> LX(3, 3);
 geom::Matrix<double> LY(3, 3);
 
-void Ransac(vector<Edgel> &edgels, vector<Segment> &segments);
 void init_gradient_matrices() {
  LX[0][0] = LX[2][0] = -1;
  LX[0][2] = LX[2][2] = 1;
