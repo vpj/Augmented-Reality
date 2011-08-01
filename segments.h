@@ -36,24 +36,22 @@ Segment merge_segments(Segment &a, Segment &b) {
 
 
 vector<Segment> merge_segments(vector<Segment> s) {
- vector<pair<double, int> > a;
+ vector<double> dir;
  vector<pair<double, pair<int, int> > > js;
 
  int N = s.size();
 
  for(int i = 0; i < N; ++i)
-  a.push_back(make_pair(s[i].direction(), i));
-
- sort(a.begin(), a.end());
+  dir.push_back(s[i].direction());
 
  for(int i = 0; i < N; ++i) {
-  for(int j = i + 1; j != i; j = (j + 1) % N) {
-   if(diff_angle(a[i].first, a[j].first) > SEGMENT_ANGLE_THRESHOLD)
-    break;
+  for(int j = i + 1; j < N; ++j) {
+   if(diff_angle(dir[i], dir[j]) > SEGMENT_ANGLE_THRESHOLD)
+    continue;
 
-   pair<Segment, Segment> join = join_segments(s[a[i].second], s[a[j].second]);
+   pair<Segment, Segment> join = join_segments(s[i], s[j]);
 
-   if(diff_angle(a[i].first, join.first.direction()) > SEGMENT_ANGLE_THRESHOLD)
+   if(diff_angle(dir[i], join.first.direction()) > SEGMENT_ANGLE_THRESHOLD)
     continue;
 
    double l2 = join.first.length2();
@@ -62,7 +60,7 @@ vector<Segment> merge_segments(vector<Segment> s) {
     continue;
 
    /* TODO: Find gradients along the line joining the two segments */
-   js.push_back(make_pair(l2, make_pair(a[i].second, a[j].second)));
+   js.push_back(make_pair(l2, make_pair(i, j)));
   }
  }
 

@@ -52,8 +52,8 @@ struct Segment {
 
  double direction() {
   double d = atan2(y2 - y1,  x2 - x1);
-  if(d < 0)
-   d += PI;
+//  if(d < 0)
+//   d += PI;
   return d;
  }
 
