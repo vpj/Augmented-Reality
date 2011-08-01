@@ -8,9 +8,9 @@ const double GAUSSIAN_DERIVATIVE[5] = {-3 * .0625, -5 * .0625, 0, 5 * .0625, 3 *
 const double SCALE_SQRT = 1;
 const double SCALE = 2;
 
-const double LINE_DISTANCE_THRESHOLD = 4 / SCALE;
+const double LINE_DISTANCE_THRESHOLD = 3 / SCALE;
 const double ANGLE_THRESHOLD = PI / 20;
-const double VOTES_THRESHOLD = 10 / SCALE;
+const double VOTES_THRESHOLD = 20 / SCALE;
 
 const double SMALL_SEGMENT_LENGTH_SQ_THRESHOLD = 250 / SCALE;
 const double SEGMENT_ANGLE_THRESHOLD = PI / 20;

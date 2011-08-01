@@ -19,7 +19,7 @@ void drawGrid(Mat &img, Scalar color) {
  }
 }
 
-void drawSegments(vector<Segment> &s, Mat &img, Scalar color) {
+void drawSegments(vector<Segment> &s, Mat &img, Scalar color, int thickness) {
  for(vector<Segment>::const_iterator r = s.begin(); r != s.end(); r++)
  {
      Point a, b;
@@ -27,7 +27,7 @@ void drawSegments(vector<Segment> &s, Mat &img, Scalar color) {
      a.y = r->y1 * SCALE;
      b.x = r->x2 * SCALE;
      b.y = r->y2 * SCALE;
-     line( img, a, b, color, 1);
+     line( img, a, b, color, thickness);
  }
 }
 

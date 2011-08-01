@@ -78,14 +78,14 @@ void detectEdgelsLocal(Mat &img, int r, int c, int R, int C, vector<Edgel> &edge
  detectEdgelsVertical(img, r, c, R, C, edgels);
 }
 
-void detectEdgels(Mat &img, vector<Edgel> &edgels, vector<Segment> &segments, vector<Segment> &segments_short)
+void detectEdgels(Mat &img, vector<Edgel> &edgels, vector<Segment> &segments)
 {
  for(int i = 0; i < img.rows; i += 40)
   for(int j = 0; j < img.cols; j += 40) {
    vector<Edgel> v;
    detectEdgelsLocal(img, i, j, min(i + 40, img.rows), min(j + 40, img.cols), v);
    edgels.insert(edgels.end(), v.begin(), v.end());
-   Ransac(v, segments, segments_short);
+   Ransac(v, segments);
   }
 }
 

@@ -73,7 +73,7 @@ vector<int> get_votes(vector<Edgel> &edgels, int m, int n) {
 }
 
 /* Find segments from edgels */
-void Ransac(vector<Edgel> &edgels, vector<Segment> &segments, vector<Segment> &segments_short) {
+void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
  srand(time(NULL));
 
  while(edgels.size() >= VOTES_THRESHOLD) {
@@ -88,7 +88,10 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments, vector<Segment> &s
    int n = rand() % N;
 
    int m = rand() % N;
-   if(m == n)
+   geom::Point<double> _np(edgels[n].x, edgels[n].y);
+   geom::Point<double> _mp(edgels[m].x, edgels[m].y);
+
+   if((_np - _mp).mag2() < 3)
     continue;
 
    vector<int> votes = get_votes(edgels, m, n);
@@ -137,10 +140,6 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments, vector<Segment> &s
    segments.push_back(
      Segment(point_projection(emxn, emxm, mne),
              point_projection(emxn, emxm, mxe)));
-   segments_short.push_back(
-     Segment(emxn.x, emxn.y,
-             emxm.x, emxm.y));
-
   } else {
    break;
   }
