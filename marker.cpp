@@ -263,7 +263,7 @@ vector<Box> merge_corners(Mat &img, vector<Corner> &c) {
 void detectAndDraw(Mat& img)
 {
  vector<Edgel> edgels;
- vector<Segment> segments;
+ vector<Segment> segments, segments_short;
  Mat gray, smallImg( cvRound (img.rows/SCALE), cvRound(img.cols/SCALE), CV_8UC1 );
 
  cvtColor( img, gray, CV_BGR2GRAY );
@@ -272,13 +272,14 @@ void detectAndDraw(Mat& img)
  equalizeHist( smallImg, smallImg );
 
  double t = (double)cvGetTickCount();
- detectEdgels(smallImg, edgels, segments);
+ detectEdgels(smallImg, edgels, segments, segments_short);
  t = (double)cvGetTickCount() - t;
  printf( "detection time = %g ms\n", t/((double)cvGetTickFrequency()*1000.) );
 
  drawGrid(img, CV_RGB(255, 200, 200));
  drawEdgels(edgels, img, CV_RGB(100, 255, 100));
- drawSegments(segments, img, CV_RGB(250, 50, 55));
+ //drawSegments(segments_short, img, CV_RGB(50, 50, 255));
+ //drawSegments(segments, img, CV_RGB(250, 50, 55));
 
  cout << segments.size() << " ==> ";
  vector<Segment> tsegments = merge_segments(segments);
@@ -289,9 +290,9 @@ void detectAndDraw(Mat& img)
  vector<Corner> corners = find_corners(smallImg, tsegments);
  vector<Box> boxes = merge_corners(smallImg, corners);
 
- //drawSegments(tsegments, img, CV_RGB(255, 100, 100));
- //drawCorners(corners, img, CV_RGB(255, 0, 0));
- //drawBoxes(boxes, img);
+ //drawSegments(tsegments, img, CV_RGB(255, 0, 0));
+ drawCorners(corners, img, CV_RGB(255, 0, 0));
+ drawBoxes(boxes, img);
 
  cout << "Segments: " << tsegments.size() << endl;
 

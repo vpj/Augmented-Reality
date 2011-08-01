@@ -43,6 +43,13 @@ struct Segment {
   this->y2 = b.y;
  }
 
+ Segment(geom::Point<double> a, geom::Point<double> b) {
+  this->x1 = round(a.x);
+  this->y1 = round(a.y);
+  this->x2 = round(b.x);
+  this->y2 = round(b.y);
+ }
+
  double direction() {
   double d = atan2(y2 - y1,  x2 - x1);
   if(d < 0)

@@ -19,6 +19,20 @@ double line_point_distance(Edgel &ea, Edgel &eb, Edgel &ep) {
  return abs(((p - a) * (b - a)) / (b - a).mag());
 }
 
+/* distance from a line to a point */
+geom::Point<double> point_projection(Edgel &ea, Edgel &eb, Edgel &ep) {
+ geom::Point<double> a(ea.x, ea.y);
+ geom::Point<double> b(eb.x, eb.y);
+ geom::Point<double> p(ep.x, ep.y);
+
+ geom::Point<double> sb = b - a;
+ geom::Point<double> sp = p - a;
+ sb = sb / sb.mag();
+
+ double d = sp ^ sb;
+ double id = 1 / d;
+ return a +  sb / id;
+}
 
 /* Find the number of edgels that support the segment joining edges m and n
    Called from RANSAC
@@ -59,7 +73,7 @@ vector<int> get_votes(vector<Edgel> &edgels, int m, int n) {
 }
 
 /* Find segments from edgels */
-void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
+void Ransac(vector<Edgel> &edgels, vector<Segment> &segments, vector<Segment> &segments_short) {
  srand(time(NULL));
 
  while(edgels.size() >= VOTES_THRESHOLD) {
@@ -93,6 +107,8 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
    /* Find the the endpoints of the segment */
    Edgel mxe = max(edgels[mx_n], edgels[mx_m]);
    Edgel mne = min(edgels[mx_n], edgels[mx_m]);
+   Edgel emxm = edgels[mx_m];
+   Edgel emxn = edgels[mx_n];
 
    for(int i = 0; i < votes.size(); ++i) {
     mxe = max(mxe, edgels[votes[i]]);
@@ -118,7 +134,13 @@ void Ransac(vector<Edgel> &edgels, vector<Segment> &segments) {
 //    continue;
 //   }
 
-   segments.push_back(Segment(mne.x, mne.y, mxe.x, mxe.y));
+   segments.push_back(
+     Segment(point_projection(emxn, emxm, mne),
+             point_projection(emxn, emxm, mxe)));
+   segments_short.push_back(
+     Segment(emxn.x, emxn.y,
+             emxm.x, emxm.y));
+
   } else {
    break;
   }
